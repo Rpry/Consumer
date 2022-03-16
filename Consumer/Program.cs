@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit;
+using MassTransit.RabbitMqTransport;
 
 namespace Consumer
 {
@@ -12,42 +12,57 @@ namespace Consumer
         {
             var busControl = Bus.Factory.CreateUsingRabbitMq(cfg =>
             {
-                cfg.Host("hawk.rmq.cloudamqp.com",
-                    "ykziztbb",
-                    h =>
-                    {
-                        h.Username("ykziztbb");
-                        h.Password("oZaUpy2Sru1P0b04K9ghjx3MSFpXTMIU");
-                    });
-                
-                cfg.ReceiveEndpoint($"masstransit_event_queue_{args[0]}", e =>
-                {
-                    e.Consumer<EventConsumer>();
-                    e.UseMessageRetry(r =>
-                    {
-                        //r.Ignore<ArithmeticException>();
-                        r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-                    });
-                });
-                cfg.ReceiveEndpoint($"masstransit_request_queue", e =>
-                {
-                    e.Consumer<RequestConsumer>();
-                });
+                Configure(cfg);
+                RegisterEndPoints(cfg, int.Parse(args[0]));
             });
 
-            var source = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-
-            await busControl.StartAsync(source.Token);
+            await busControl.StartAsync();
             try
             {
                 Console.WriteLine("Press enter to exit");
-
                 await Task.Run(() => Console.ReadLine());
             }
             finally
             {
                 await busControl.StopAsync();
             }
+        }
+
+        /// <summary>
+        /// КОнфигурирование
+        /// </summary>
+        /// <param name="configurator"></param>
+        private static void Configure(IRabbitMqBusFactoryConfigurator configurator)
+        {
+            configurator.Host("hawk.rmq.cloudamqp.com",
+                "ykziztbb",
+                h =>
+                {
+                    h.Username("ykziztbb");
+                    h.Password("oZaUpy2Sru1P0b04K9ghjx3MSFpXTMIU");
+                });
+        }
+
+        /// <summary>
+        /// регистрация эндпоинтов
+        /// </summary>
+        /// <param name="configurator"></param>
+        /// <param name="index"></param>
+        private static void RegisterEndPoints(IRabbitMqBusFactoryConfigurator configurator, int index)
+        {
+            configurator.ReceiveEndpoint($"masstransit_event_queue_{index}", e =>
+            {
+                e.Consumer<EventConsumer>();
+                e.UseMessageRetry(r =>
+                {
+                    //r.Ignore<ArithmeticException>();
+                    r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                });
+            });
+            configurator.ReceiveEndpoint($"masstransit_request_queue", e =>
+            {
+                e.Consumer<RequestConsumer>();
+            });
         }
     }
 }
