@@ -34,12 +34,12 @@ namespace Consumer
         /// <param name="configurator"></param>
         private static void Configure(IRabbitMqBusFactoryConfigurator configurator)
         {
-            configurator.Host("hawk.rmq.cloudamqp.com",
-                "ykziztbb",
+            configurator.Host("cow.rmq2.cloudamqp.com",
+                "xvvcjzoi",
                 h =>
                 {
-                    h.Username("ykziztbb");
-                    h.Password("oZaUpy2Sru1P0b04K9ghjx3MSFpXTMIU");
+                    h.Username("xvvcjzoi");
+                    h.Password("3zzqgto8t6iqz6EMWhrx3fj8ubnToHJ6");
                 });
         }
 
